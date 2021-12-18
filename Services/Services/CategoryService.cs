@@ -1,5 +1,7 @@
 ﻿using Data;
 using Entity;
+using Microsoft.Extensions.Logging;
+using Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,7 +43,7 @@ namespace Services
 
         public Category GetCategory(string Name)
         {
-            return _ReadLaterDataContext.Categories.Where(c => c.Name == Name).FirstOrDefault();
+            return _ReadLaterDataContext.Categories.Where(c => c.Name.ToLower() == Name.ToLower()).FirstOrDefault();
         }
 
         public void DeleteCategory(Category category)
