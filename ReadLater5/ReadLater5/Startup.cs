@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ReadLater5.Mappers;
+using Entity;
 
 namespace ReadLater5
 {
@@ -37,8 +38,17 @@ namespace ReadLater5
 
             InjectMappers.InjectMapperProfiles(services);
 
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ReadLaterDataContext>();
+
+            services.AddAuthentication().AddFacebook(options =>
+            {
+                options.AppId = Configuration["FacebookAppId"];
+                options.AppSecret = Configuration["FacebookAppSecret"];
+            });
+
+            services.AddTransient<UserManager<ApplicationUser>>();
+            services.AddTransient<SignInManager<ApplicationUser>>();
 
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IBookmarkService, BookmarkService>();
