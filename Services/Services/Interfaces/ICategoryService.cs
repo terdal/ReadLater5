@@ -1,4 +1,5 @@
 ﻿using Entity;
+using Services.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +10,11 @@ namespace Services.Interfaces
 {
     public interface ICategoryService
     {
-        Category CreateCategory(Category category);
-        List<Category> GetCategories();
-        Category GetCategory(int Id);
-        Category GetCategory(string Name);
-        void UpdateCategory(Category category);
-        void DeleteCategory(Category category);
+        ResultDTO<CategoryDTO> CreateCategory(CategoryDTO category, string userId);
+        List<CategoryDTO> GetCategories(string userId);
+        CategoryDTO GetCategory(int Id, string userId);
+        CategoryDTO GetCategory(string Name, string userId);
+        ResultDTO UpdateCategory(CategoryDTO category, string userId);
+        ResultDTO DeleteCategory(int categoryId, string userId);
     }
 }

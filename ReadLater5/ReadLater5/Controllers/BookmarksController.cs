@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Entity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ReadLater5.Helpers;
 using ReadLater5.Models;
@@ -19,17 +21,19 @@ namespace ReadLater5.Controllers
         IBookmarkService _bookmarkService;
         ICategoryService _categoryService;
         private readonly IMapper _mapper;
+        private UserManager<ApplicationUser> _userManager;
 
-        public BookmarksController(IBookmarkService bookmarkService, ICategoryService categoryService, IMapper mapper)
+        public BookmarksController(IBookmarkService bookmarkService, ICategoryService categoryService, IMapper mapper, UserManager<ApplicationUser> userManager)
         {
             _bookmarkService = bookmarkService;
             _categoryService = categoryService;
             _mapper = mapper;
+            _userManager = userManager;
         }
         // GET: Bookmarks
         public IActionResult Index()
         {
-            var model = _mapper.Map<List<BookmarkModel>>(_bookmarkService.GetBookmarks());
+            var model = _mapper.Map<List<BookmarkModel>>(_bookmarkService.GetBookmarks(_userManager.GetUserId(User)));
             return View(model);
         }
 
@@ -40,7 +44,7 @@ namespace ReadLater5.Controllers
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest);
             }
-            BookmarkModel bookmark = _mapper.Map<BookmarkModel>(_bookmarkService.GetBookmark((int)id));
+            var bookmark = _mapper.Map<BookmarkModel>(_bookmarkService.GetBookmark((int)id, _userManager.GetUserId(User)));
             if (bookmark == null)
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound);
@@ -53,7 +57,7 @@ namespace ReadLater5.Controllers
         public IActionResult Create()
         {
             var model = new UpsertBookmarkModel();
-            model.PossibleCategories = _mapper.Map<List<CategoryModel>>(_mapper.Map<List<CategoryDTO>>(_categoryService.GetCategories()));
+            model.PossibleCategories = _mapper.Map<List<CategoryModel>>(_categoryService.GetCategories(_userManager.GetUserId(User)));
             return View(model);
         }
 
@@ -69,7 +73,7 @@ namespace ReadLater5.Controllers
                 bool validationResult = Uri.IsWellFormedUriString(bookmark.URL, UriKind.Absolute);
                 if (validationResult)
                 {
-                    var result = _bookmarkService.CreateBookmark(_mapper.Map<UpsertBookmarkDTO>(bookmark));
+                    var result = _bookmarkService.CreateBookmark(_mapper.Map<UpsertBookmarkDTO>(bookmark), _userManager.GetUserId(User));
                     if (result.Succeeded)
                         return RedirectToAction("Index");
                     else
@@ -90,12 +94,12 @@ namespace ReadLater5.Controllers
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest);
             }
-            var bookmark = _mapper.Map<UpsertBookmarkModel>(_bookmarkService.GetBookmark((int)id));
+            var bookmark = _mapper.Map<UpsertBookmarkModel>(_bookmarkService.GetBookmark((int)id, _userManager.GetUserId(User)));
             if (bookmark == null)
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound);
             }
-            bookmark.PossibleCategories = _mapper.Map<List<CategoryModel>>(_mapper.Map<List<CategoryDTO>>(_categoryService.GetCategories()));
+            bookmark.PossibleCategories = _mapper.Map<List<CategoryModel>>(_mapper.Map<List<CategoryDTO>>(_categoryService.GetCategories(_userManager.GetUserId(User))));
             return View(bookmark);
         }
 
@@ -111,7 +115,7 @@ namespace ReadLater5.Controllers
                 bool validationResult = Uri.IsWellFormedUriString(bookmark.URL, UriKind.Absolute);
                 if (validationResult)
                 {
-                    var result = _bookmarkService.UpdateBookmark(_mapper.Map<UpsertBookmarkDTO>(bookmark));
+                    var result = _bookmarkService.UpdateBookmark(_mapper.Map<UpsertBookmarkDTO>(bookmark), _userManager.GetUserId(User));
                     if (result.Succeeded)
                         return RedirectToAction("Index");
                     else
@@ -132,7 +136,7 @@ namespace ReadLater5.Controllers
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest);
             }
-            BookmarkModel bookmark = _mapper.Map<BookmarkModel>(_bookmarkService.GetBookmark((int)id));
+            var bookmark = _mapper.Map<BookmarkModel>(_bookmarkService.GetBookmark((int)id, _userManager.GetUserId(User)));
             if (bookmark == null)
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound);
@@ -145,7 +149,7 @@ namespace ReadLater5.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            var result = _bookmarkService.DeleteBookmark(id);
+            var result = _bookmarkService.DeleteBookmark(id, _userManager.GetUserId(User));
             if (result.Succeeded)
                 return RedirectToAction("Index");
 

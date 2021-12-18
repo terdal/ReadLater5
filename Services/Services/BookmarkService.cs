@@ -29,12 +29,12 @@ namespace Services
             _categoryService = categoryService;
         }
 
-        public List<BookmarkDTO> GetBookmarks()
+        public List<BookmarkDTO> GetBookmarks(string userId)
         {
             var bookmarks = new List<BookmarkDTO>();
             try
             {
-                var dbBookmarks = _ReadLaterDataContext.Bookmark.Include("Category").ToList();
+                var dbBookmarks = _ReadLaterDataContext.Bookmark.Where(x => x.UserId == userId).Include("Category").ToList();
                 bookmarks = _mapper.Map<List<BookmarkDTO>>(dbBookmarks);
             }
             catch (Exception ex)
@@ -44,12 +44,12 @@ namespace Services
             return bookmarks;
         }
 
-        public BookmarkDTO GetBookmark(int Id)
+        public BookmarkDTO GetBookmark(int Id, string userId)
         {
             BookmarkDTO bookmark = null;
             try
             {
-                var dbBookmark = _ReadLaterDataContext.Bookmark.Include("Category").Where(c => c.ID == Id).FirstOrDefault();
+                var dbBookmark = _ReadLaterDataContext.Bookmark.Where(c => c.ID == Id && c.UserId == userId).Include("Category").FirstOrDefault();
                 bookmark = _mapper.Map<BookmarkDTO>(dbBookmark);
             }
             catch (Exception ex)
@@ -60,7 +60,7 @@ namespace Services
             return bookmark;
         }
 
-        public ResultDTO CreateBookmark(UpsertBookmarkDTO bookmark)
+        public ResultDTO CreateBookmark(UpsertBookmarkDTO bookmark, string userId)
         {
             var result = new ResultDTO();
 
@@ -71,7 +71,8 @@ namespace Services
                     URL = bookmark.URL,
                     ShortDescription = bookmark.ShortDescription,
                     CreateDate = DateTime.UtcNow,
-                    CategoryId = GetBookmarkCategoryId(bookmark)
+                    CategoryId = GetBookmarkCategoryId(bookmark, userId),
+                    UserId = userId
                 };
 
                 _ReadLaterDataContext.Add(dbBookmark);
@@ -86,7 +87,7 @@ namespace Services
             return result;
         }
 
-        public ResultDTO UpdateBookmark(UpsertBookmarkDTO bookmark)
+        public ResultDTO UpdateBookmark(UpsertBookmarkDTO bookmark, string userId)
         {
             var result = new ResultDTO();
 
@@ -102,7 +103,8 @@ namespace Services
 
                 dbBookmark.URL = bookmark.URL;
                 dbBookmark.ShortDescription = bookmark.ShortDescription;
-                dbBookmark.CategoryId = GetBookmarkCategoryId(bookmark);
+                dbBookmark.CategoryId = GetBookmarkCategoryId(bookmark, userId);
+                dbBookmark.UserId = userId;
 
                 _ReadLaterDataContext.Update(dbBookmark);
                 _ReadLaterDataContext.SaveChanges();
@@ -117,13 +119,13 @@ namespace Services
             return result;
         }
 
-        public ResultDTO DeleteBookmark(int bookmarkId)
+        public ResultDTO DeleteBookmark(int bookmarkId, string userId)
         {
             var result = new ResultDTO();
 
             try
             {
-                var dbBookmark = _ReadLaterDataContext.Bookmark.Where(c => c.ID == bookmarkId).FirstOrDefault();
+                var dbBookmark = _ReadLaterDataContext.Bookmark.Where(c => c.ID == bookmarkId && c.UserId == userId).FirstOrDefault();
 
                 if (dbBookmark == null)
                 {
@@ -145,7 +147,7 @@ namespace Services
             return result;
         }
 
-        private int? GetBookmarkCategoryId(UpsertBookmarkDTO bookmark)
+        private int? GetBookmarkCategoryId(UpsertBookmarkDTO bookmark, string userId)
         {
             try
             {
@@ -155,11 +157,11 @@ namespace Services
                     categoryId = null;
                 else if (!bookmark.CategoryId.HasValue)
                 {
-                    var category = _mapper.Map<CategoryDTO>(_categoryService.GetCategory(bookmark.CategoryName.Trim()));
+                    var category = _mapper.Map<CategoryDTO>(_categoryService.GetCategory(bookmark.CategoryName.Trim(), userId));
                     if (category == null)
                     {
-                        var dbCategory = _categoryService.CreateCategory(new Category() { Name = bookmark.CategoryName.Trim() });
-                        categoryId = dbCategory.ID;
+                        var dbCategory = _categoryService.CreateCategory(new CategoryDTO() { Name = bookmark.CategoryName.Trim() }, userId);
+                        categoryId = dbCategory.Data?.ID;
                     }
                     else
                         categoryId = category.ID;

@@ -11,4 +11,11 @@ namespace Services.DTOs
         public bool Succeeded { get; set; }
         public string ErrorMessage { get; set; }
     }
+
+    public class ResultDTO<T>
+    {
+        public bool Succeeded { get; set; }
+        public string ErrorMessage { get; set; }
+        public T Data { get; set; }
+    }
 }

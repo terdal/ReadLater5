@@ -10,10 +10,10 @@ namespace Services.Interfaces
 {
     public interface IBookmarkService
     {
-        List<BookmarkDTO> GetBookmarks();
-        BookmarkDTO GetBookmark(int Id);
-        ResultDTO CreateBookmark(UpsertBookmarkDTO bookmark);
-        ResultDTO UpdateBookmark(UpsertBookmarkDTO bookmark);
-        ResultDTO DeleteBookmark(int bookmarkId);
+        List<BookmarkDTO> GetBookmarks(string userId);
+        BookmarkDTO GetBookmark(int Id, string userId);
+        ResultDTO CreateBookmark(UpsertBookmarkDTO bookmark, string userId);
+        ResultDTO UpdateBookmark(UpsertBookmarkDTO bookmark, string userId);
+        ResultDTO DeleteBookmark(int bookmarkId, string userId);
     }
 }

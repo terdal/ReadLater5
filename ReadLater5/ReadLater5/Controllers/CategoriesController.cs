@@ -1,6 +1,10 @@
-﻿using Entity;
+﻿using AutoMapper;
+using Entity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ReadLater5.Models;
+using Services.DTOs;
 using Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -14,14 +18,19 @@ namespace ReadLater5.Controllers
     public class CategoriesController : Controller
     {
         ICategoryService _categoryService;
-        public CategoriesController(ICategoryService categoryService)
+        private readonly IMapper _mapper;
+        private UserManager<ApplicationUser> _userManager;
+
+        public CategoriesController(ICategoryService categoryService, IMapper mapper, UserManager<ApplicationUser> userManager)
         {
             _categoryService = categoryService;
+            _mapper = mapper;
+            _userManager = userManager;
         }
         // GET: Categories
         public IActionResult Index()
         {
-            List<Category> model = _categoryService.GetCategories();
+            var model = _mapper.Map<List<CategoryModel>>(_categoryService.GetCategories(_userManager.GetUserId(User)));
             return View(model);
         }
 
@@ -32,7 +41,7 @@ namespace ReadLater5.Controllers
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest);
             }
-            Category category = _categoryService.GetCategory((int)id);
+            var category = _mapper.Map<CategoryModel>(_categoryService.GetCategory((int)id, _userManager.GetUserId(User)));
             if (category == null)
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound);
@@ -52,14 +61,16 @@ namespace ReadLater5.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Category category)
+        public IActionResult Create(CategoryModel category)
         {
             if (ModelState.IsValid)
             {
-                _categoryService.CreateCategory(category);
-                return RedirectToAction("Index");
+                var result = _categoryService.CreateCategory(_mapper.Map<CategoryDTO>(category), _userManager.GetUserId(User));
+                if (result.Succeeded)
+                    return RedirectToAction("Index");
+                else
+                    ModelState.AddModelError("General", result.ErrorMessage);
             }
-
             return View(category);
         }
 
@@ -70,7 +81,7 @@ namespace ReadLater5.Controllers
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest);
             }
-            Category category = _categoryService.GetCategory((int)id);
+            var category = _mapper.Map<CategoryModel>(_categoryService.GetCategory((int)id, _userManager.GetUserId(User)));
             if (category == null)
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound);
@@ -83,12 +94,15 @@ namespace ReadLater5.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Category category)
+        public IActionResult Edit(CategoryModel category)
         {
             if (ModelState.IsValid)
             {
-                _categoryService.UpdateCategory(category);
-                return RedirectToAction("Index");
+                var result = _categoryService.UpdateCategory(_mapper.Map<CategoryDTO>(category), _userManager.GetUserId(User));
+                if (result.Succeeded)
+                    return RedirectToAction("Index");
+                else
+                    ModelState.AddModelError("General", result.ErrorMessage);
             }
             return View(category);
         }
@@ -100,7 +114,7 @@ namespace ReadLater5.Controllers
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest);
             }
-            Category category = _categoryService.GetCategory((int)id);
+            var category = _mapper.Map<CategoryModel>(_categoryService.GetCategory((int)id, _userManager.GetUserId(User)));
             if (category == null)
             {
                 return new StatusCodeResult(Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound);
@@ -113,9 +127,12 @@ namespace ReadLater5.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            Category category = _categoryService.GetCategory(id);
-            _categoryService.DeleteCategory(category);
-            return RedirectToAction("Index");
+            var result = _categoryService.DeleteCategory(id, _userManager.GetUserId(User));
+            if (result.Succeeded)
+                return RedirectToAction("Index");
+
+            ModelState.AddModelError("General", result.ErrorMessage);
+            return View();
         }
     }
 }
