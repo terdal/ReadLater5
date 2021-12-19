@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ReadLater5API.Mappers;
+using ReadLater5API.Middlewares;
 using Services;
 using Services.Interfaces;
 using System;
@@ -69,8 +70,11 @@ namespace ReadLater5API
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
+            var path = AppContext.BaseDirectory;
+            loggerFactory.AddFile($"{path}\\Logs\\Log.txt");
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -78,14 +82,7 @@ namespace ReadLater5API
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ReadLater5API v1"));
             }
 
-            //app.UseUserManagerFactory(new IdentityFactoryOptions<UserManager<ApplicationUser>>()
-            //{
-            //    DataProtectionProvider = app.GetDataProtectionProvider(),
-            //    Provider = new IdentityFactoryProvider<UserManager<ApplicationUser>>()
-            //    {
-            //        OnCreate = ApplicationUserManager.Create
-            //    }
-            //});
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseHttpsRedirection();
 

@@ -69,7 +69,7 @@ namespace ReadLater5API.Controllers
                         return StatusCode(StatusCodes.Status500InternalServerError, result.ErrorMessage);
                 }
                 else
-                    return BadRequest("Invalid URL property");
+                    throw new HttpListenerException((int)HttpStatusCode.BadRequest, "Invalid URL property");
             }
 
             return BadRequest(ModelState.Select(x => x.Value.Errors)
