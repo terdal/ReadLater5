@@ -12,8 +12,8 @@ namespace Services.Interfaces
     {
         List<BookmarkDTO> GetBookmarks(string userId);
         BookmarkDTO GetBookmark(int Id, string userId);
-        ResultDTO CreateBookmark(UpsertBookmarkDTO bookmark, string userId);
-        ResultDTO UpdateBookmark(UpsertBookmarkDTO bookmark, string userId);
+        ResultDTO<BookmarkDTO> CreateBookmark(UpsertBookmarkDTO bookmark, string userId);
+        ResultDTO<BookmarkDTO> UpdateBookmark(UpsertBookmarkDTO bookmark, string userId);
         ResultDTO DeleteBookmark(int bookmarkId, string userId);
     }
 }

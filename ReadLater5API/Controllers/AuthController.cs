@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Entity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using ReadLater5API.Models;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,37 +19,40 @@ namespace ReadLater5API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _configuration = configuration;
+            _userManager = userManager;
         }
 
         [HttpPost]
-        public IActionResult Authenticate([FromBody] Credential credential)
+        public async Task<IActionResult> Authenticate([FromBody] Credential credential)
         {
-            if (credential.UserName == "admin" && credential.Password == "123123")
+            var user = await _userManager.FindByEmailAsync(credential.Email);
+
+            if (user == null)
+                return Unauthorized("User doesn't exist.");
+
+            var verifyPassword = _userManager.PasswordHasher.VerifyHashedPassword(user, user.PasswordHash, credential.Password);
+
+            if (verifyPassword == PasswordVerificationResult.Failed)
+                return Unauthorized("Invalid password.");
+
+            var claims = new List<Claim>
             {
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, "admin"),
-                    new Claim(ClaimTypes.Email, "admin@cryptolord.com"),
-                    new Claim("CryptoClaim", "Crypto"),
-                    new Claim("TradingClaim", "true"),
-                    new Claim("TradingDaysClaim", "10")
-                };
+                new Claim("UserId", user.Id),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
 
-                var expiresAt = DateTime.UtcNow.AddMinutes(10);
+            var expiresAt = DateTime.UtcNow.AddMinutes(30);
 
-                return Ok(new
-                {
-                    access_token = CreateToken(claims, expiresAt),
-                    expires_at = expiresAt
-                });
-            }
-
-            ModelState.AddModelError("Unauthorized", "You're not authorized to access the endpoint");
-            return Unauthorized(ModelState);
+            return Ok(new
+            {
+                access_token = CreateToken(claims, expiresAt),
+                expires_at = expiresAt
+            });
         }
 
         private string CreateToken(IEnumerable<Claim> claims, DateTime expiresAt)
@@ -64,11 +70,5 @@ namespace ReadLater5API.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
-    }
-
-    public class Credential
-    {
-        public string UserName { get; set; }
-        public string Password { get; set; }
     }
 }

@@ -60,9 +60,9 @@ namespace Services
             return bookmark;
         }
 
-        public ResultDTO CreateBookmark(UpsertBookmarkDTO bookmark, string userId)
+        public ResultDTO<BookmarkDTO> CreateBookmark(UpsertBookmarkDTO bookmark, string userId)
         {
-            var result = new ResultDTO();
+            var result = new ResultDTO<BookmarkDTO>();
 
             try
             {
@@ -77,6 +77,7 @@ namespace Services
 
                 _ReadLaterDataContext.Add(dbBookmark);
                 _ReadLaterDataContext.SaveChanges();
+                result.Data = _mapper.Map<BookmarkDTO>(dbBookmark);
                 result.Succeeded = true;
             }
             catch (Exception ex)
@@ -87,9 +88,9 @@ namespace Services
             return result;
         }
 
-        public ResultDTO UpdateBookmark(UpsertBookmarkDTO bookmark, string userId)
+        public ResultDTO<BookmarkDTO> UpdateBookmark(UpsertBookmarkDTO bookmark, string userId)
         {
-            var result = new ResultDTO();
+            var result = new ResultDTO<BookmarkDTO>();
 
             try
             {
@@ -108,6 +109,7 @@ namespace Services
 
                 _ReadLaterDataContext.Update(dbBookmark);
                 _ReadLaterDataContext.SaveChanges();
+                result.Data = _mapper.Map<BookmarkDTO>(dbBookmark);
                 result.Succeeded = true;
             }
             catch (Exception ex)

@@ -53,8 +53,10 @@ namespace ReadLater5API
 
             InjectMappers.InjectMapperProfiles(services);
 
-            //services.AddTransient<UserManager<ApplicationUser>>();
-            //services.AddTransient<SignInManager<ApplicationUser>>();
+            services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddEntityFrameworkStores<ReadLaterDataContext>();
+
+            services.AddTransient<UserManager<ApplicationUser>>();
 
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IBookmarkService, BookmarkService>();
@@ -75,6 +77,15 @@ namespace ReadLater5API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ReadLater5API v1"));
             }
+
+            //app.UseUserManagerFactory(new IdentityFactoryOptions<UserManager<ApplicationUser>>()
+            //{
+            //    DataProtectionProvider = app.GetDataProtectionProvider(),
+            //    Provider = new IdentityFactoryProvider<UserManager<ApplicationUser>>()
+            //    {
+            //        OnCreate = ApplicationUserManager.Create
+            //    }
+            //});
 
             app.UseHttpsRedirection();
 
